@@ -5,8 +5,9 @@ from MyServer import OpcUaTestServer
 from MyServer.Lifetime import MachineModelBase
 from MyServer.MachineOperation import SensorConfig, SensorConfigList, SensorId
 from MyServer.MachineOperation import SensorType
-from MyServer.Sensor import TemperatureSensor, SensorBase
-from MyServer.Sensor.Modification.TemperatureMutator import TemperatureMutator
+from MyServer.Sensor import TemperatureSensor
+from MyServer.Sensor.Base import SensorBase, SensorDictBase
+from MyServer.Simulation import TemperatureSimulationDriver
 
 router: APIRouter = APIRouter()
 
@@ -21,7 +22,10 @@ async def add_sensor(sensor_config: SensorConfig, request: Request):
             temperature_sensor: TemperatureSensor = TemperatureSensor(sensor_config.identifier)
             if not sensor_config.simulator_config is None:
                 try:
-                    temperature_mutator: TemperatureMutator = TemperatureMutator(temperature_sensor, **sensor_config.simulator_config)
+                    temperature_mutator: TemperatureSimulationDriver = TemperatureSimulationDriver(
+                        temperature_sensor,
+                        **sensor_config.simulator_config
+                    )
                     logging.debug(f"Adding sensor {temperature_sensor.name} with mutator.")
                     server.model.add_sensor(temperature_sensor, temperature_mutator)
                 except Exception as e:
@@ -39,9 +43,9 @@ async def add_sensor(sensor_config: SensorConfig, request: Request):
 async def get_sensors(request: Request):
     logging.info("List of sensors requested.")
     def to_sensor_config(s: SensorBase) -> SensorConfig:
-        dictionary = s.to_dict()
+        dictionary: SensorDictBase = s.to_data_object()
         config: SensorConfig = SensorConfig(
-            type=dictionary["type"],
+            type=dictionary.sensor_type,
             identifier=s.identifier,
             simulator_config=None
         )

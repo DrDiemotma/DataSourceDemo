@@ -1,3 +1,4 @@
+import dataclasses
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
@@ -6,7 +7,25 @@ from decimal import InvalidOperation
 import inspect
 import logging
 
+
 from MyServer.MachineOperation import SensorType, SensorId
+
+
+@dataclasses.dataclass(frozen=True)
+class SensorDictBase:
+    """Base dictionary for sensors."""
+    sensor_type: SensorType
+    """Type of the sensor."""
+    identifier: int
+    """Identifier of the sensor."""
+    updates_per_second: float
+    """How often the sensors updates."""
+    namespace: str
+    """Namespace to store the sensor data in the data model."""
+
+
+    def as_dict(self):
+        return dataclasses.asdict(self)
 
 
 class SensorBase[T](ABC):
@@ -20,7 +39,7 @@ class SensorBase[T](ABC):
     __callback_locks: dict[Callable[[datetime, T], ...], asyncio.Lock]
     __last_value: T
     __last_measured_time: datetime
-    __mutator_dict: Callable[[], dict] | None = None
+    __mutator_dict: Callable[[], SensorDictBase] | None = None
     __source: Callable[[...], T] | None
     __task: asyncio.Task | None
 
@@ -76,22 +95,19 @@ class SensorBase[T](ABC):
         """Get the sensor type."""
         return self.__sensor_id.type
 
-    def to_dict(self) -> dict:
-        complete_dict: dict = self._to_dict()
-        if self.__mutator_dict is not None:
-            complete_dict["mutator"] = self.__mutator_dict()
-        return complete_dict
+    def to_data_object(self) -> SensorDictBase:
+        return self._to_data_dictionary()
 
     @property
-    def mutator_dict(self) -> Callable[[], dict]:
+    def driver_dict_callback(self) -> Callable[[], SensorDictBase]:
         return self.__mutator_dict
 
-    @mutator_dict.setter
-    def mutator_dict(self, value: Callable[[], dict]):
+    @driver_dict_callback.setter
+    def driver_dict_callback(self, value: Callable[[], SensorDictBase]):
         self.__mutator_dict = value
 
     @abstractmethod
-    def _to_dict(self) -> dict:
+    def _to_data_dictionary(self) -> SensorDictBase:
         """Create a JSON string from which the sensor can be reconstructed (but the recorded data)."""
         pass
 

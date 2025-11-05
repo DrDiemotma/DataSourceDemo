@@ -2,12 +2,14 @@ import asyncio
 from typing import Any
 
 import pytest
-from asyncua import Client, ua
+from asyncua import Client
 
 from MyServer import OpcUaTestServer
 from MyServer.Lifetime import MachineModelBase
 from MyServer.MachineOperation import SensorId
-from MyServer.Sensor import TemperatureSensor, SensorBase, Mutator
+from MyServer.Sensor import TemperatureSensor
+from MyServer.Sensor.Base import SensorBase
+from MyServer.Simulation import SimulationDriver
 
 
 class MachineModelMock(MachineModelBase):
@@ -38,7 +40,7 @@ class MachineModelMock(MachineModelBase):
     def get_temperature(self) -> float:
         return self.temperature
 
-    def add_sensor(self, sensor: SensorBase, mutator: Mutator = None, **kwargs):
+    def add_sensor(self, sensor: SensorBase, driver: SimulationDriver = None, **kwargs):
         if isinstance(sensor, TemperatureSensor):
             sensor.source = self.get_temperature
             assert sensor.source() == self.temperature

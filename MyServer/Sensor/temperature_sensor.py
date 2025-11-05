@@ -1,5 +1,6 @@
 from MyServer.MachineOperation import SensorType
-from MyServer.Sensor.sensor_base import SensorBase
+from MyServer.Sensor.Base.sensor_base import SensorBase, SensorDictBase
+
 
 class TemperatureSensor(SensorBase[float]):
     """Temperature sensor implementation."""
@@ -14,13 +15,13 @@ class TemperatureSensor(SensorBase[float]):
                          namespace=namespace,
                          updates_per_second=updates_per_second)
 
-    def _to_dict(self) -> dict:
-        d = {
-            "type": SensorType.TEMPERATURE,
-            "identifier": self.identifier,
-            "namespace": self.namespace,
-            "updates_per_second": self.updates_per_second
-        }
+    def _to_data_dictionary(self) -> SensorDictBase:
+        d: SensorDictBase = SensorDictBase(
+            sensor_type=SensorType.TEMPERATURE,
+            identifier=self.identifier,
+            namespace=self.namespace,
+            updates_per_second=self.updates_per_second
+        )
 
         return d
 

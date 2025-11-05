@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from MyServer.MachineOperation.sensor_data_model import SensorId
-from MyServer.Sensor import SensorBase, Mutator
+from MyServer.Sensor.Base import SensorBase, DriverBase
 from typing import Any
 
 
@@ -9,10 +9,10 @@ class MachineModelBase(ABC):
     """Abstract machine model class."""
 
     @abstractmethod
-    def add_sensor(self, sensor: SensorBase, mutator: Mutator = None, **kwargs):
+    def add_sensor(self, sensor: SensorBase, driver: DriverBase = None, **kwargs):
         """Add a sensor to the configuration.
         :param sensor: The sensor to add.
-        :param mutator: Optional mutator, for example, to simulate sensor behaviour.
+        :param driver: Optional driver, for example, to simulate sensor behaviour.
         """
         pass
 

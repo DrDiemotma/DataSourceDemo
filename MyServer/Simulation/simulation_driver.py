@@ -1,11 +1,14 @@
+import json
 from datetime import datetime
+
 from MyServer.MachineOperation import State, Mode
 from abc import ABC, abstractmethod
 
-from MyServer.Sensor import SensorBase
+from .simulation_driver_data import SimulationDriverData
+from MyServer.Sensor.Base import SensorBase, SensorDictBase
 
 
-class Mutator[T](ABC):
+class SimulationDriver[T](ABC):
     """
     Mutator class for data, depending on state and operation mode of the machine.
     """
@@ -16,7 +19,12 @@ class Mutator[T](ABC):
         self.__value_time: datetime = datetime.now()
         self.__mode: Mode = mode
         self.__state: State = state
-        sensor.mutator_dict = self.to_dict
+        sensor.driver_dict_callback = self.to_driver_data
+
+    @property
+    def sensor(self):
+        """Get the sensor assigned to the simulated driver."""
+        return self.__sensor
 
     @property
     def mode(self) -> Mode:
@@ -49,7 +57,7 @@ class Mutator[T](ABC):
         return self.__value_time
 
     @abstractmethod
-    def to_dict(self) -> dict:
+    def to_driver_data(self) -> SimulationDriverData:
         """Translate the data to a serializable json."""
         pass
 
@@ -63,15 +71,22 @@ class Mutator[T](ABC):
         self.__value_time, self.__current_value = self._update_current_value()
         return self.__current_value
 
-    @property
-    def sensor(self) -> SensorBase[T]:
-        """Get the sensor from the mutator."""
-        return self.__sensor
 
-
-class MutatorFactory[T](ABC):
+class DriverFactory[T](ABC):
     @staticmethod
     @abstractmethod
-    def from_dict(d: dict) -> Mutator[T]:
+    def from_dict(d: dict) -> SimulationDriver[T]:
         """create a new instance from a dict."""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def json_encoder() -> type[json.JSONEncoder]:
+        """Get the json encoder for this factory."""
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def json_decoder() -> type[json.JSONDecoder]:
+        """Get the json decoder for this factory."""
         ...

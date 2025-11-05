@@ -1,13 +1,16 @@
 import json
 from typing import Any
 import logging
+import dataclasses
+from enum import Enum
 
 from MyServer.Lifetime.machine_model_base import MachineModelBase
 from MyServer.MachineOperation.sensor_data_model import SensorId
 from MyServer.MachineOperation import State, Mode, SensorType
-from MyServer.Sensor import SensorBase, Mutator, TemperatureSensor
-from MyServer.Sensor.Modification.TemperatureMutator import TemperatureMutator, TemperatureMutatorFactory
-from MyServer.Sensor.Modification.mutator import MutatorFactory
+from MyServer.Sensor import TemperatureSensor
+from MyServer.Simulation import DriverFactory, TemperatureSimulationDriverFactory, TemperatureSimulationDriver, \
+    SimulationDriver
+from MyServer.Sensor.Base import SensorBase, DriverBase
 
 MACHINE_STATE: str = "machine_state"
 
@@ -37,79 +40,86 @@ class MachineModel(MachineModelBase):
 
     def start_job(self):
         logging.info("Starting job.")
-        for mutator in self._mutators:
+        for mutator in self._drivers:
             mutator.mode = Mode.RUNNING
 
     def stop_job(self):
         logging.info("Stopping job.")
-        for mutator in self._mutators:
+        for mutator in self._drivers:
             mutator.mode = Mode.IDLE
 
     def set_state_broken(self):
         logging.info("Setting machine state to \"broken\".")
-        for mutator in self._mutators:
+        for mutator in self._drivers:
             mutator.state = State.BROKEN
 
     def set_state_normal(self):
         logging.info("Setting machine state to \"normal\".")
-        for mutator in self._mutators:
+        for mutator in self._drivers:
             mutator.state = State.NORMAL
 
     def __init__(self):
         self._sensors: list[SensorBase] = []
-        self._mutators: list[Mutator] = []
+        self._drivers: list[DriverBase | SimulationDriver] = []
         self._state: State = State.NORMAL
         self._mode: Mode = Mode.RUNNING
 
-        self._sensor_factory_map: dict[SensorType, MutatorFactory] = {
-            SensorType.TEMPERATURE: TemperatureMutatorFactory(),
+        self._sensor_factory_map: dict[SensorType, DriverFactory] = {
+            SensorType.TEMPERATURE: TemperatureSimulationDriverFactory(),
         }
 
     def __del__(self):
         for sensor in self._sensors:
             sensor.stop()
 
-    def add_sensor(self, sensor: SensorBase, mutator: Mutator = None, **kwargs):
+    def add_sensor(self, sensor: SensorBase, driver: DriverBase | SimulationDriver = None, **kwargs):
         """
         Add a sensor.
         :param sensor: Sensor to add.
-        :param mutator: mutator for the sensor. If None, a default mutator is created for the respective sensor.
+        :param driver: mutator for the sensor. If None, a default mutator is created for the respective sensor.
         """
         logging.info(f"Adding sensor {sensor.name}, type {sensor.sensor_type}, to machine.")
         self._sensors.append(sensor)
-        if mutator is not None:
+        if driver is not None:
             logging.info(f"Mutator for sensor {sensor.name} given, continue with present one.")
-            mutator.state = self._state
-            mutator.mode = self._mode
-            self._mutators.append(mutator)
+            driver.state = self._state
+            driver.mode = self._mode
+            self._drivers.append(driver)
             return
 
         logging.info(f"No mutator for sensor {sensor.name} given, use default configuration.")
         # create the mutator automatically
         if isinstance(sensor, TemperatureSensor):
             logging.info(f"Adding {sensor.name} as temperature sensor.")
-            temperature_mutator: TemperatureMutator =  TemperatureMutator(sensor, **kwargs)
+            temperature_mutator: TemperatureSimulationDriver =  TemperatureSimulationDriver(sensor, **kwargs)
             temperature_mutator.state = self._state
             temperature_mutator.mode = self._mode
-            self._mutators.append(temperature_mutator)
+            self._drivers.append(temperature_mutator)
 
     @property
-    def mutators(self) -> list[Mutator]:
+    def mutators(self) -> list[DriverBase]:
         """Get a list of current mutators to fine-tune behaviour."""
-        return list(self._mutators)
+        return list(self._drivers)
 
     @property
     def sensors(self) -> list[SensorBase]:
         """Get the sensors"""
-        return [x.sensor for x in self._mutators]
+        return [x.sensor for x in self._drivers]
 
 
     def save_configuration(self, file_path: str):
         """Save the current configuration to a file."""
         logging.info(f"Saving configuration to file {file_path}.")
-        data = [sensor.to_dict() for sensor in self._sensors]
+        serialized = []
+        for driver in self._drivers:
+            d = driver.to_driver_data()
+            sensor_type = d.sensor.sensor_type
+            encoder = self._sensor_factory_map[sensor_type].json_encoder()
+            json_str = json.dumps(d, cls=encoder)  # driver dependent JSON format
+            serialized.append(json.loads(json_str))
+
         with open(file_path, "w") as f:
-            json.dump(data, f, indent=4)
+            json.dump(serialized, f, indent=4)
 
     def restore_configuration(self, file_path: str):
         """Load mutators from a file."""
@@ -118,23 +128,32 @@ class MachineModel(MachineModelBase):
             dictionary = json.load(f)
         for entry in dictionary:
             logging.debug(f"Entries: {entry}")
-            sensor_type = SensorType(entry["type"])
+            if "sensor" not in entry:
+                logging.error("Field 'sensor' must be present in the dictionary. Skipping.")
+                continue
+            if not isinstance(entry["sensor"], dict):
+                logging.error("Field 'sensor' is not of dictionary type. Skipping.")
+                continue
+            if not "sensor_type" in entry.get("sensor"):
+                logging.error("'sensor_type' cannot be determined. Skipping.")
+                continue
             try:
-                factory: MutatorFactory = self._sensor_factory_map[sensor_type]
+                sensor_type = SensorType(entry.get("sensor").get("sensor_type"))
+                factory: DriverFactory = self._sensor_factory_map[sensor_type]
             except KeyError:
                 raise NotImplementedError(f"The case {entry['type']} is not implemented yet.")
-            mutator: Mutator = factory.from_dict(entry)
-            logging.info(f"Adding sensor {mutator.sensor.name}.")
-            self._sensors.append(mutator.sensor)
-            self._mutators.append(mutator)
+            driver: DriverBase | SimulationDriver = factory.from_dict(entry)
+            logging.info(f"Adding sensor {driver.sensor.name}.")
+            self._sensors.append(driver.sensor)
+            self._drivers.append(driver)
 
     def delete_sensor(self, sensor_id: SensorId):
         logging.info(f"Deleting sensor {sensor_id}.")
-        mutator = next(x for x in self._mutators
+        mutator = next(x for x in self._drivers
                        if x.sensor.sensor_id == sensor_id)
         sensor = mutator.sensor
         sensor.stop()
-        self._mutators.remove(mutator)
+        self._drivers.remove(mutator)
         self._sensors.remove(sensor)
 
     @property
@@ -146,7 +165,7 @@ class MachineModel(MachineModelBase):
     def state(self, value: State):
         """Set the current state of the machine."""
         logging.info(f"Setting state to {value}.")
-        for m in self._mutators:
+        for m in self._drivers:
             m.state = value
 
         self._state = value
@@ -160,7 +179,7 @@ class MachineModel(MachineModelBase):
     def mode(self, value: Mode):
         """Set the current mode of the machine."""
         logging.info(f"Setting mode to {value}")
-        for m in self._mutators:
+        for m in self._drivers:
             m.mode = value
 
         self._mode = value

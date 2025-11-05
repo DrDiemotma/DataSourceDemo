@@ -2,11 +2,15 @@ import asyncio
 import pytest
 from datetime import datetime
 
-from pandas.core.methods.describe import describe_timestamp_1d
 
-from MyServer.Sensor.Modification.TemperatureMutator import TemperatureMutator, TemperatureMutatorFactory
+from MyServer.Simulation.simulation_temperature_driver import (
+    TemperatureSimulationDriver,
+    TemperatureSimulationDriverFactory
+)
 from MyServer.Sensor import TemperatureSensor
-from MyServer.MachineOperation import State, Mode
+from MyServer.MachineOperation import Mode
+from MyServer.Sensor.Base.sensor_base import SensorDictBase
+
 
 class TestSensorConsumer:
     temperature: float
@@ -18,7 +22,7 @@ class TestSensorConsumer:
 
 def test_measure():
     sensor: TemperatureSensor = TemperatureSensor(1)
-    sut: TemperatureMutator = TemperatureMutator(sensor, start_value=20.0)
+    sut: TemperatureSimulationDriver = TemperatureSimulationDriver(sensor, start_value=20.0)
     value: float = sut.measure()
     assert 15.0 < value < 25.0  # should be around 20 degrees plus some noise.
 
@@ -27,7 +31,7 @@ async def test_updates():
     sensor: TemperatureSensor = TemperatureSensor(1, updates_per_second=100)
     consumer = TestSensorConsumer()
     sensor.add_callback(consumer.callback)
-    sut: TemperatureMutator = TemperatureMutator(sensor, start_value=20.0, value_running=200)
+    sut: TemperatureSimulationDriver = TemperatureSimulationDriver(sensor, start_value=20.0, value_running=200)
     sensor.start()
     await asyncio.sleep(2.0 / sensor.updates_per_second)  # make sure data is written
     start_temperature = consumer.temperature
@@ -49,7 +53,7 @@ async def test_adaption():
     consumer = TestSensorConsumer()
     sensor.add_callback(consumer.callback)
     # don't increase the st_dev value, this is here to have a very deterministic behaviour of temperature
-    sut: TemperatureMutator = TemperatureMutator(sensor, start_value=20.0, value_running=200, st_dev=10e-8)
+    sut: TemperatureSimulationDriver = TemperatureSimulationDriver(sensor, start_value=20.0, value_running=200, st_dev=10e-8)
     sensor.start()
     await asyncio.sleep(2.0 / sensor.updates_per_second) # make sure data is written
     raw_data = [consumer.temperature] * 10
@@ -67,80 +71,21 @@ async def test_adaption():
         last_difference = ascend
 
 def test_to_dict():
+    """
+    Test the to_dict method in SensorMutators in order to ensure that the necessary entries are returned as expected.
+    """
     sensor: TemperatureSensor = TemperatureSensor(1)
-    sensor_dict: dict = sensor.to_dict()
-    d = {
-        "sensor": sensor,
-        "start_value": 21.7,
-        "random_seed": 123,
-        "st_dev": 1.2,
-        "value_idle": 18.6,
-        "value_running": 72.8,
-        "value_running_broken": 161.91,
-        "adaption_rate": 0.262
-    }
-    sut: TemperatureMutator = TemperatureMutator(**d)
-    description = sut.to_dict()
+    sensor_dict: SensorDictBase = sensor.to_data_object()
+    sut: TemperatureSimulationDriver = TemperatureSimulationDriver(sensor=sensor,
+        start_value=21.7,
+        random_seed=123,
+        st_dev=1.2,
+        value_idle=18.6,
+        value_running=72.8,
+        value_running_broken=161.91,
+        adaption_rate=0.262)
 
-    for key, value in d.items():
-        assert key in description
-        v_test = description[key]
-        if isinstance(value, (int, float)):
-            assert abs(value - v_test) < 10e-12, print(f"Values for \"{key}\" to dissimilar: expected {value}, got {v_test}.")
-        elif isinstance(value, str):
-            assert value == v_test, print(f"Field {key} was not equal: expected \"{value}\", got \"{v_test}\"")
-        elif isinstance(value, TemperatureSensor):
-            target_dict = value.to_dict()
-            for sensor_key, sensor_value in sensor_dict.items():
-                assert sensor_key in target_dict, print(f"Key {sensor_key} expected but not in result dict.")
-                target_dict_value = target_dict[sensor_key]
-                if isinstance(sensor_value, (int, float)):
-                    assert abs(sensor_value - target_dict_value) < 10e-12, print(f"Values for {key}.{sensor_key} too" 
-                        f"dissimilar, expected {sensor_value}, got {target_dict_value}")
-                elif isinstance(sensor_value, str):
-                    assert sensor_value == target_dict_value, print(f"Field {key}.{sensor_key} not equal: expected"
-                        f"{sensor_value}, got {target_dict_value}")
-                else:
-                    raise NotImplementedError(f"The field {key}.{sensor_key} is not tested for.")
-        else:
-            raise NotImplementedError(f"The field {key} is not tested for.")
-
-def test_temperature_mutator_factory():
-    sensor: TemperatureSensor = TemperatureSensor(1)
-    sensor_dict: dict = sensor.to_dict()
-    d = {
-        "sensor": sensor,
-        "start_value": 21.7,
-        "random_seed": 123,
-        "st_dev": 1.2,
-        "value_idle": 18.6,
-        "value_running": 72.8,
-        "value_running_broken": 161.91,
-        "adaption_rate": 0.262
-    }
-    mutator: TemperatureMutator = TemperatureMutatorFactory.from_dict(d)
-    description = mutator.to_dict()
-
-    for key, value in d.items():
-        assert key in description
-        v_test = description[key]
-        if isinstance(value, (int, float)):
-            assert abs(value - v_test) < 10e-12, print(f"Values for \"{key}\" to dissimilar: expected {value}, got {v_test}.")
-        elif isinstance(value, str):
-            assert value == v_test, print(f"Field {key} was not equal: expected \"{value}\", got \"{v_test}\"")
-        elif isinstance(value, TemperatureSensor):
-            target_dict = value.to_dict()
-            for sensor_key, sensor_value in sensor_dict.items():
-                assert sensor_key in target_dict, print(f"Key {sensor_key} expected but not in result dict.")
-                target_dict_value = target_dict[sensor_key]
-                if isinstance(sensor_value, (int, float)):
-                    assert abs(sensor_value - target_dict_value) < 10e-12, print(f"Values for {key}.{sensor_key} too" 
-                        f"dissimilar, expected {sensor_value}, got {target_dict_value}")
-                elif isinstance(sensor_value, str):
-                    assert sensor_value == target_dict_value, print(f"Field {key}.{sensor_key} not equal: expected"
-                        f"{sensor_value}, got {target_dict_value}")
-                else:
-                    raise NotImplementedError(f"The field {key}.{sensor_key} is not tested for.")
-        else:
-            raise NotImplementedError(f"The field {key} is not tested for.")
-
+    description = sut.to_driver_data()
+    # the description needs both, the sensor and the mutator, to have all the information to create a new and identical
+    # mutator.
+    assert description.identifier == sensor_dict.identifier, "Identifier was not equal."
