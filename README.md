@@ -1,4 +1,4 @@
-# Data Source Demo
+# Data Source Demo Version 0.0.1
 A simple implementation of an OPC UA server.
 Used as a demo for being a data source for the development of edge clients.
 
@@ -90,4 +90,34 @@ docker stop <ID>
 
 ## System Architecture
 On a high level, OPC UA works with a connection between a client and the server.
+In contrast to REST, the client creates a session on server side in order to be able to receive the data.
+The data itself is created on server side.
+
 ![Network connection](Images/[OAB]%20Activities%20for%20Data%20Receiving.png)
+
+In principle, control of the server can be implemented by implementing functions in the OPC UA interface.
+In this simulated server, the OPC UA side is considered alike a real machine:
+controls are implemented in different means.
+In a physical machine, this is controlled for example by physical limitations, that is, a sensor is exposed if the sensor is physically present and the data is meant to be presented.
+In this simulation, this configuration is performed through a REST API.
+
+![API and simulation setup](Images/[OAB]%20OpcUaServer.png)
+
+The API is currently under development in this early stage.
+Once it is mature enough, it will receive version 0.1.
+Currently, it is moving fast, therefore handle with care.
+You can find the current API in `MyServer/Api/api_router.py`.
+
+### Sensor Management
+The core of this software is the sensor management component.
+Here, sensors are set up and data is generated.
+Notice that this so far is a simulation, meaning that the driver takes in the role of creating random signals.
+There is no hardware connection with the driver.
+These values are written to the sensor representation.
+This again is very similar to real sensors.
+The data is then written in the data model.
+
+![Simulated sensors and drivers](Images/[OAB]%20Machine%Model.png)
+
+Because of technical limitations of the asyncua server implementation, there is no update modus implemented yet.
+Hence, a client must implement a polling mechanism.
