@@ -117,7 +117,7 @@ These values are written to the sensor representation.
 This again is very similar to real sensors.
 The data is then written in the data model.
 
-![Simulated sensors and drivers](Images/[OAB]%20Machine%Model.png)
+![Simulated sensors and drivers](Images/[OAB]%20Machine%20Model.png)
 
 Because of technical limitations of the asyncua server implementation, there is no update modus implemented yet.
 Hence, a client must implement a polling mechanism.
