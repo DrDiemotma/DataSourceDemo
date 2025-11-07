@@ -29,6 +29,7 @@ WORKDIR $WORKDIR
 
 # install the own modules
 COPY main.py .
+COPY LICENSE .
 COPY MyServer $WORKDIR/MyServer
 COPY start.sh .
 RUN chmod +x start.sh
