@@ -20,15 +20,15 @@ def client() -> Generator[TestClient, Any, None]:
 def test_add_sensor_simulator_config_none(client: TestClient):
     sensor_config: SensorConfig = SensorConfig(type=SensorType.TEMPERATURE, identifier=42, simulator_config=None)
     # client: TestClient = create_test_client()
-    response = client.post("/add_sensor", json=sensor_config.model_dump())
+    response = client.post("/v0.1/add_sensor", json=sensor_config.model_dump())
     assert response.is_success, print(response)
 
 def test_get_sensors(client: TestClient):
     sensor_config: SensorConfig = SensorConfig(type=SensorType.TEMPERATURE, identifier=42, simulator_config=None)
-    response = client.post("/add_sensor", json=sensor_config.model_dump())
+    response = client.post("/v0.1/add_sensor", json=sensor_config.model_dump())
     assert response.is_success, print(response)
 
-    response = client.get("/get_sensors")
+    response = client.get("/v0.1/get_sensors")
     assert response.is_success
     data = response.json()
     assert "sensors" in data, print(f"Response model must include \"sensors\".")
@@ -36,7 +36,7 @@ def test_get_sensors(client: TestClient):
 
 def test_delete_sensor(client: TestClient):
     sensor_config: SensorConfig = SensorConfig(type=SensorType.TEMPERATURE, identifier=97, simulator_config=None)
-    response = client.post("/add_sensor", json=sensor_config.model_dump())
+    response = client.post("/v0.1/add_sensor", json=sensor_config.model_dump())
     assert response.is_success, print(response)
 
     sensor_id = SensorId(
@@ -44,10 +44,10 @@ def test_delete_sensor(client: TestClient):
         type=sensor_config.type
     )
 
-    response = client.post("/delete_sensor", json=sensor_id.model_dump())
+    response = client.post("/v0.1/delete_sensor", json=sensor_id.model_dump())
     assert response.is_success, print(response)
 
-    response = client.get("/get_sensors")
+    response = client.get("/v0.1/get_sensors")
     assert response.is_success, print(response)
     assert len(response.json()["sensors"]) == 0, print("Sensor was not deleted.")
 

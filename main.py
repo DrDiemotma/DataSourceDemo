@@ -14,7 +14,7 @@ app = FastAPI(title="OPC UA Server Demo")
 machine_model: MachineModel = MachineModel()
 server = opc_ua_server.OpcUaTestServer(machine=machine_model)
 app.state.server = server
-app.include_router(router)
+# app.include_router(router)
 app.include_router(router_v01, prefix="/v0.1")
 
 def start_service(level, port: int = 8765):
