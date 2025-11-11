@@ -2,7 +2,8 @@ import sys
 
 from MyServer import opc_ua_server
 from fastapi import FastAPI
-from MyServer.Api import router
+from fastapi.responses import FileResponse
+from MyServer.Api import router, router_v01
 from MyServer.Lifetime import MachineModel
 import logging
 from logging.handlers import RotatingFileHandler
@@ -14,6 +15,7 @@ machine_model: MachineModel = MachineModel()
 server = opc_ua_server.OpcUaTestServer(machine=machine_model)
 app.state.server = server
 app.include_router(router)
+app.include_router(router_v01, prefix="/v0.1")
 
 def start_service(level, port: int = 8765):
     handler = RotatingFileHandler(
@@ -36,10 +38,13 @@ def start_service(level, port: int = 8765):
         logger = logging.getLogger(name)
         logger.setLevel(level)
         logger.addHandler(handler)
-        # logger.addHandler(stream_handler)
 
     logging.info(f"Starting FastAPI service on port {port}.")
     uvicorn.run("main:app", host="127.0.0.1", port=port, reload=False, log_config=None)
+
+@app.get("/", response_class=FileResponse)
+async def root():
+    return "static/index.html"
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

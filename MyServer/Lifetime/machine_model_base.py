@@ -4,12 +4,14 @@ from MyServer.MachineOperation.sensor_data_model import SensorId
 from MyServer.Sensor.Base import SensorBase, DriverBase
 from typing import Any
 
+from MyServer.Simulation import SimulationDriver
+
 
 class MachineModelBase(ABC):
     """Abstract machine model class."""
 
     @abstractmethod
-    def add_sensor(self, sensor: SensorBase, driver: DriverBase = None, **kwargs):
+    def add_sensor(self, sensor: SensorBase, driver: DriverBase | SimulationDriver = None, **kwargs):
         """Add a sensor to the configuration.
         :param sensor: The sensor to add.
         :param driver: Optional driver, for example, to simulate sensor behaviour.

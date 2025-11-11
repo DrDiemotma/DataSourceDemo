@@ -4,11 +4,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from MyServer.Lifetime import MachineModel
-from MyServer.MachineOperation.sensor_data_model import SensorId
 from main import app, opc_ua_server
 
-from MyServer.Api import SensorConfig
-from MyServer.MachineOperation import SensorType
+from MyServer.MachineOperation import SensorType, SensorId, SensorConfig
 
 @pytest.fixture
 def client() -> Generator[TestClient, Any, None]:
