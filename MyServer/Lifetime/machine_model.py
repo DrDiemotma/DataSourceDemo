@@ -7,9 +7,9 @@ from enum import Enum
 from MyServer.Lifetime.machine_model_base import MachineModelBase
 from MyServer.MachineOperation.sensor_data_model import SensorId
 from MyServer.MachineOperation import State, Mode, SensorType
-from MyServer.Sensor import TemperatureSensor
+from MyServer.Sensor import TemperatureSensor, PressureSensor
 from MyServer.Simulation import DriverFactory, TemperatureSimulationDriverFactory, TemperatureSimulationDriver, \
-    SimulationDriver
+    SimulationDriver, PressureSimulationDriver
 from MyServer.Sensor.Base import SensorBase, DriverBase
 
 MACHINE_STATE: str = "machine_state"
@@ -81,20 +81,26 @@ class MachineModel(MachineModelBase):
         logging.info(f"Adding sensor {sensor.name}, type {sensor.sensor_type}, to machine.")
         self._sensors.append(sensor)
         if driver is not None:
-            logging.info(f"Mutator for sensor {sensor.name} given, continue with present one.")
+            logging.info(f"Driver for sensor {sensor.name} given, continue with present one.")
             driver.state = self._state
             driver.mode = self._mode
             self._drivers.append(driver)
             return
 
-        logging.info(f"No mutator for sensor {sensor.name} given, use default configuration.")
-        # create the mutator automatically
+        logging.info(f"No driver for sensor {sensor.name} given, use default configuration.")
+        # create the driver automatically
         if isinstance(sensor, TemperatureSensor):
             logging.info(f"Adding {sensor.name} as temperature sensor.")
-            temperature_mutator: TemperatureSimulationDriver =  TemperatureSimulationDriver(sensor, **kwargs)
-            temperature_mutator.state = self._state
-            temperature_mutator.mode = self._mode
-            self._drivers.append(temperature_mutator)
+            temperature_driver: TemperatureSimulationDriver = TemperatureSimulationDriver(sensor, **kwargs)
+            temperature_driver.state = self._state
+            temperature_driver.mode = self._mode
+            self._drivers.append(temperature_driver)
+        elif isinstance(sensor, PressureSensor):
+            logging.info(f"Adding {sensor.name} as pressure sensor.")
+            pressure_driver: PressureSimulationDriver = PressureSimulationDriver(sensor, **kwargs)
+            pressure_driver.state = self._state
+            pressure_driver.mode = self._mode
+            self._drivers.append(pressure_driver)
 
     @property
     def mutators(self) -> list[DriverBase]:

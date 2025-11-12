@@ -12,7 +12,6 @@ from .simulation_driver import DriverFactory, SimulationDriver
 from .temperature_driver_data import TemperatureDriverData
 from ..Sensor.Base import SensorDictBase
 
-TYPE_ENTRY_NAME: str = "type"
 
 class TemperatureSimulationDriver(SimulationDriver[float]):
     """Simulator implementation for temperature sensors."""
@@ -126,11 +125,3 @@ class TemperatureSimulationDriverFactory(DriverFactory[float]):
                                              adaption_rate=d["adaption_rate"],
                                              st_dev=d["st_dev"])
         return driver
-
-    @staticmethod
-    def json_encoder() -> type[json.JSONEncoder]:
-        return SensorJsonEncoder
-
-    @staticmethod
-    def json_decoder() -> type[json.JSONDecoder]:
-        return SensorJsonDecoder

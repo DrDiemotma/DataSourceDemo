@@ -78,15 +78,3 @@ class DriverFactory[T](ABC):
     def from_dict(d: dict) -> SimulationDriver[T]:
         """create a new instance from a dict."""
         ...
-
-    @staticmethod
-    @abstractmethod
-    def json_encoder() -> type[json.JSONEncoder]:
-        """Get the json encoder for this factory."""
-        ...
-
-    @staticmethod
-    @abstractmethod
-    def json_decoder() -> type[json.JSONDecoder]:
-        """Get the json decoder for this factory."""
-        ...

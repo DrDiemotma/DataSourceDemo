@@ -4,7 +4,7 @@ from datetime import datetime
 
 from MyServer.MachineOperation import Mode, State, SensorType
 from MyServer.Lifetime.machine_model import MachineModel
-from MyServer.Sensor import  TemperatureSensor
+from MyServer.Sensor import TemperatureSensor, PressureSensor
 from MyServer.Sensor.Base import SensorBase
 from MyServer.Simulation import SimulationDriver
 
@@ -73,6 +73,13 @@ def test_add_temperature_sensor():
     old_mutator_count = len(sut.mutators)
     sut.add_sensor(sensor)
     assert len(sut.mutators) > old_mutator_count, "Mutator for temperature sensor was not created."
+
+def test_add_pressure_sensor():
+    sensor: PressureSensor = PressureSensor(1)
+    sut: MachineModel = MachineModel()
+    old_mutator_count = len(sut.mutators)
+    sut.add_sensor(sensor)
+    assert len(sut.mutators) > old_mutator_count, "Mutator for pressure sensor was not created."
 
 def test_save_configuration(file_manager):
 

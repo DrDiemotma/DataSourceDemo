@@ -4,10 +4,10 @@ from datetime import datetime
 
 
 from MyServer.Simulation import (
-    TemperatureSimulationDriver,
-    TemperatureSimulationDriverFactory
+    PressureSimulationDriver,
+    PressureSimulationDriverFactory
 )
-from MyServer.Sensor import TemperatureSensor
+from MyServer.Sensor import PressureSensor
 from MyServer.MachineOperation import Mode
 from MyServer.Sensor.Base import SensorDictBase
 
@@ -21,17 +21,17 @@ class TestSensorConsumer:
 
 
 def test_measure():
-    sensor: TemperatureSensor = TemperatureSensor(1)
-    sut: TemperatureSimulationDriver = TemperatureSimulationDriver(sensor, start_value=20.0)
+    sensor: PressureSensor = PressureSensor(1)
+    sut: PressureSimulationDriver = PressureSimulationDriver(sensor, start_value=20.0)
     value: float = sut.measure()
     assert 15.0 < value < 25.0  # should be around 20 degrees plus some noise.
 
 @pytest.mark.asyncio
 async def test_updates():
-    sensor: TemperatureSensor = TemperatureSensor(1, updates_per_second=100)
+    sensor: PressureSensor = PressureSensor(1, updates_per_second=100)
     consumer = TestSensorConsumer()
     sensor.add_callback(consumer.callback)
-    sut: TemperatureSimulationDriver = TemperatureSimulationDriver(sensor, start_value=20.0, value_running=200)
+    sut: PressureSimulationDriver = PressureSimulationDriver(sensor)
     sensor.start()
     await asyncio.sleep(2.0 / sensor.updates_per_second)  # make sure data is written
     start_temperature = consumer.temperature
@@ -49,11 +49,11 @@ async def test_updates():
 
 @pytest.mark.asyncio
 async def test_adaption():
-    sensor: TemperatureSensor = TemperatureSensor(1, updates_per_second=100)
+    sensor: PressureSensor = PressureSensor(1, updates_per_second=100)
     consumer = TestSensorConsumer()
     sensor.add_callback(consumer.callback)
     # don't increase the st_dev value, this is here to have a very deterministic behaviour of temperature
-    sut: TemperatureSimulationDriver = TemperatureSimulationDriver(sensor, start_value=20.0, value_running=200, st_dev=10e-8)
+    sut: PressureSimulationDriver = PressureSimulationDriver(sensor)
     sensor.start()
     await asyncio.sleep(2.0 / sensor.updates_per_second) # make sure data is written
     raw_data = [consumer.temperature] * 10
@@ -74,16 +74,11 @@ def test_to_dict():
     """
     Test the to_dict method in SensorMutators in order to ensure that the necessary entries are returned as expected.
     """
-    sensor: TemperatureSensor = TemperatureSensor(1)
+    sensor: PressureSensor = PressureSensor(1)
     sensor_dict: SensorDictBase = sensor.to_data_object()
-    sut: TemperatureSimulationDriver = TemperatureSimulationDriver(sensor=sensor,
+    sut: PressureSimulationDriver = PressureSimulationDriver(sensor=sensor,
         start_value=21.7,
-        random_seed=123,
-        st_dev=1.2,
-        value_idle=18.6,
-        value_running=72.8,
-        value_running_broken=161.91,
-        adaption_rate=0.262)
+        random_seed=123)
 
     description = sut.to_driver_data()
     # the description needs both, the sensor and the mutator, to have all the information to create a new and identical
