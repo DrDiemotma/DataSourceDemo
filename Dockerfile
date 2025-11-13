@@ -31,6 +31,7 @@ WORKDIR $WORKDIR
 COPY main.py .
 COPY LICENSE .
 COPY MyServer $WORKDIR/MyServer
+COPY static $WORKDIR/static
 COPY start.sh .
 RUN chmod +x start.sh
 
