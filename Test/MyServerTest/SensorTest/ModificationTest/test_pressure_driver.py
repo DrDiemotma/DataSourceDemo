@@ -13,11 +13,11 @@ from MyServer.Sensor.Base import SensorDictBase
 
 
 class TestSensorConsumer:
-    temperature: float
+    pressure: float
     time_stamp: datetime
     def callback(self, time_stamp: datetime, value: float):
         self.time_stamp = time_stamp
-        self.temperature = value
+        self.pressure = value
 
 
 def test_measure():
@@ -34,17 +34,17 @@ async def test_updates():
     sut: PressureSimulationDriver = PressureSimulationDriver(sensor)
     sensor.start()
     await asyncio.sleep(2.0 / sensor.updates_per_second)  # make sure data is written
-    start_temperature = consumer.temperature
+    start_pressure = consumer.pressure
     start_time = consumer.time_stamp
-    assert start_temperature > 0
+    assert start_pressure > 0
     assert start_time is not None
     sut.mode = Mode.RUNNING
     await asyncio.sleep(10.0 / sensor.updates_per_second)  # make sure value has time to increase
     sensor.stop()
-    end_temperature = consumer.temperature
+    end_pressure = consumer.pressure
     end_time = consumer.time_stamp
 
-    assert end_temperature > start_temperature
+    assert end_pressure < start_pressure
     assert end_time > start_time
 
 @pytest.mark.asyncio
@@ -53,22 +53,22 @@ async def test_adaption():
     consumer = TestSensorConsumer()
     sensor.add_callback(consumer.callback)
     # don't increase the st_dev value, this is here to have a very deterministic behaviour of temperature
-    sut: PressureSimulationDriver = PressureSimulationDriver(sensor)
+    sut: PressureSimulationDriver = PressureSimulationDriver(sensor, st_dev=10e-8)
     sensor.start()
     await asyncio.sleep(2.0 / sensor.updates_per_second) # make sure data is written
-    raw_data = [consumer.temperature] * 10
+    raw_data = [consumer.pressure] * 10
     sut.mode = Mode.RUNNING
     for i in range(1, 10):
         await asyncio.sleep(1.0 / sensor.updates_per_second)
-        raw_data[i] = consumer.temperature
+        raw_data[i] = consumer.pressure
     sensor.stop()  # we don't need to have it running for the rest of the test, just see that the data increases
     last_difference = 10000.0
     for i in range(1, 10):
         ascend = raw_data[i] - raw_data[i - 1]
-        assert ascend > 0, print("")  # should always increase
-        assert ascend < last_difference, print("Temperature was expected to rise asymptotically, but went from"
+        assert ascend < 0, print("")  # should always increase
+        assert abs(ascend) < last_difference, print("Pressure was expected to drop asymptotically, but went from"
                                               f"{last_difference} to {ascend}.")  # slows down ofer time
-        last_difference = ascend
+        last_difference = abs(ascend)
 
 def test_to_dict():
     """

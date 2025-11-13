@@ -1,11 +1,10 @@
-import json
 from datetime import datetime
 
 from MyServer.MachineOperation import State, Mode
 from abc import ABC, abstractmethod
 
 from .simulation_driver_data import SimulationDriverData
-from MyServer.Sensor.Base import SensorBase, SensorDictBase
+from MyServer.Sensor.Base import SensorBase
 
 
 class SimulationDriver[T](ABC):

@@ -119,10 +119,7 @@ class MachineModel(MachineModelBase):
         serialized = []
         for driver in self._drivers:
             d = driver.to_driver_data()
-            sensor_type = d.sensor.sensor_type
-            encoder = self._sensor_factory_map[sensor_type].json_encoder()
-            json_str = json.dumps(d, cls=encoder)  # driver dependent JSON format
-            serialized.append(json.loads(json_str))
+            serialized.append(d.as_dict())
 
         with open(file_path, "w") as f:
             json.dump(serialized, f, indent=4)

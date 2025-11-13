@@ -66,7 +66,6 @@ def test_add_custom_sensor():
     assert mutator.mode == Mode.RUNNING, print("Mode not connected to mutator.")
     assert mutator.state == State.BROKEN, print("State not connected to mutator.")
 
-
 def test_add_temperature_sensor():
     sensor: TemperatureSensor = TemperatureSensor(1)
     sut: MachineModel = MachineModel()
@@ -82,7 +81,6 @@ def test_add_pressure_sensor():
     assert len(sut.mutators) > old_mutator_count, "Mutator for pressure sensor was not created."
 
 def test_save_configuration(file_manager):
-
     test_file_name: str = "test_machine_model_configuration.json"
     file_manager[test_file_name] = os.path.abspath(test_file_name)
     if os.path.isfile(file_manager[test_file_name]):
@@ -94,9 +92,11 @@ def test_save_configuration(file_manager):
 
     sensor: TemperatureSensor = TemperatureSensor(1)
     sensor2: TemperatureSensor = TemperatureSensor(2)
+    sensor3: PressureSensor = PressureSensor(1)
     sut: MachineModel = MachineModel()
     sut.add_sensor(sensor)
     sut.add_sensor(sensor2)
+    sut.add_sensor(sensor3)
     sut.save_configuration(file_manager[test_file_name])
     assert os.path.isfile(file_manager[test_file_name]), print("Testfile was not written")
     os.remove(file_manager[test_file_name])

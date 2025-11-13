@@ -1,9 +1,6 @@
 import random
 import math
 from datetime import datetime
-import json
-from dataclasses import asdict
-from enum import Enum
 
 from MyServer.Sensor import TemperatureSensor
 from MyServer.MachineOperation import Mode, State
@@ -16,8 +13,13 @@ from ..Sensor.Base import SensorDictBase
 class TemperatureSimulationDriver(SimulationDriver[float]):
     """Simulator implementation for temperature sensors."""
 
-    def __init__(self, sensor: TemperatureSensor, start_value: float = 20.0, random_seed: int = 42, st_dev: float = 0.5,
-                 value_idle: float = 20.0, value_running: float = 80.0, value_running_broken: float = 120.0,
+    def __init__(self, sensor: TemperatureSensor,
+                 start_value: float = 20.0,
+                 random_seed: int = 42,
+                 st_dev: float = 0.5,
+                 value_idle: float = 20.0,
+                 value_running: float = 80.0,
+                 value_running_broken: float = 120.0,
                  adaption_rate: float = 0.05):
         """
         ctor.
@@ -88,17 +90,6 @@ class TemperatureSimulationDriver(SimulationDriver[float]):
         )
         return d
 
-class SensorJsonEncoder(json.JSONEncoder):
-    def default(self, o: object):
-        if hasattr(o, "__dataclass_fields__"):
-            return asdict(o)
-        if isinstance(o, Enum):
-            return o.value
-        return super().default(o)
-
-class SensorJsonDecoder(json.JSONDecoder):
-    ...
-
 
 class TemperatureSimulationDriverFactory(DriverFactory[float]):
 
@@ -110,7 +101,7 @@ class TemperatureSimulationDriverFactory(DriverFactory[float]):
         try:
             sensor_data = SensorDictBase(**sensor_dict)
         except:
-            raise  # some fields mismatch here
+            raise  # some fields mismatch here, we implement special catches later
 
         sensor = TemperatureSensor(sensor_data.identifier,
                                    updates_per_second=sensor_data.updates_per_second,
