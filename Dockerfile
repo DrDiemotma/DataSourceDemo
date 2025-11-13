@@ -43,6 +43,6 @@ USER $USER
 ENV LOGGING_LEVEL=INFO
 
 # Ports to expose, we are using a OPC UA server here
-EXPOSE 4840 8765
+EXPOSE 8765 4840
 
 CMD ["./start.sh"]

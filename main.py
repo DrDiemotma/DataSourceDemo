@@ -40,7 +40,7 @@ def start_service(level, port: int = 8765):
         logger.addHandler(handler)
 
     logging.info(f"Starting FastAPI service on port {port}.")
-    uvicorn.run("main:app", host="127.0.0.1", port=port, reload=False, log_config=None)
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False, log_config=None)
 
 @app.get("/", response_class=FileResponse)
 async def root():
