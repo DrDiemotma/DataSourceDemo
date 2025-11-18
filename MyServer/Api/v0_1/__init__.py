@@ -1,1 +1,1 @@
-from .router import router_v01
+from .router import router_v01, router_examples

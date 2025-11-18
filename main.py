@@ -3,7 +3,7 @@ import sys
 from MyServer import opc_ua_server
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from MyServer.Api import router, router_v01
+from MyServer.Api import router_v01, router_examples
 from MyServer.Lifetime import MachineModel
 import logging
 from logging.handlers import RotatingFileHandler
@@ -14,8 +14,8 @@ app = FastAPI(title="OPC UA Server Demo")
 machine_model: MachineModel = MachineModel()
 server = opc_ua_server.OpcUaTestServer(machine=machine_model)
 app.state.server = server
-# app.include_router(router)
 app.include_router(router_v01, prefix="/v0.1")
+app.include_router(router_examples, prefix="/v0.1")
 
 def start_service(level, port: int = 8765):
     handler = RotatingFileHandler(
