@@ -105,3 +105,5 @@ class PressureSimulationDriverFactory(DriverFactory[float]):
                                           value_running_broken = d["value_running_broken"],
                                           adaption_rate = d["adaption_rate"]
                                           )
+
+        return driver
