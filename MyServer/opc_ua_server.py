@@ -93,6 +93,10 @@ class OpcUaTestServer:
         """Return whether the server is set up."""
         return self._set_up and not self._stopped  # this is too simplified, lets rework this later
 
+    @property
+    def is_initialized(self):
+        return self._set_up
+
     async def setup_server(self) -> bool:
         """
         Set up the server.

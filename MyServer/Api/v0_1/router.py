@@ -39,6 +39,16 @@ async def stop(request: Request):
     server: OpcUaTestServer = request.app.state.server
     await server.stop()
 
+@router_v01.get("/is_initialized",
+                summary="Returns whether the system is initialized.",
+                description="The initialization is simulating the boot up of the machine. If the machine is not set "
+                    "up, it cannot be started. Internally, this starts the OPC UA server.")
+async def is_initialized(request: Request):
+    server: OpcUaTestServer = request.app.state.server
+    result = server.is_initialized
+    logging.info(f"Requested is initialized, result: {result}")
+    return result
+
 @router_v01.get("/is_running",
                 summary="Get whether the server is currently running.",
                 description="Requests from the server whether the machine is running.")
@@ -111,6 +121,24 @@ async def get_sensors(request: Request):
     logging.debug(f"Number of sensors: {len(sensors)}.")
     config_list = SensorConfigList(sensors=[to_sensor_config(x) for x in sensors])
     return config_list
+
+@router_v01.post("/initialize",
+                 summary="Initialize the machine.",
+                 description="Start the machine. This simulates the boot up of the machine itself. Practically, this "
+                    "initializes the OPC UA server.")
+async def initialize(request: Request):
+    server: OpcUaTestServer = request.app.state.server
+    already_initialized = server.is_initialized
+    if already_initialized:
+        logging.info("Request for initialization, but already initialized. Skipping.")
+        return False
+    result = server.setup_server()
+    if result:
+        logging.info("Setting up server successful.")
+    else:
+        logging.error("Setting up server failed.")
+    return result
+
 
 @router_v01.post("/start_job",
                  summary="Start a job.",
