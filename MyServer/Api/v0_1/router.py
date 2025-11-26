@@ -160,7 +160,7 @@ async def stop_job(request: Request):
     logging.info(f"Sop of job, stopped: {stopped}.")
     return stopped
 
-@router_v01.post("/is_job_running")
+@router_v01.get("/is_job_running")
 async def is_job_running(request: Request):
     server: OpcUaTestServer = request.app.state.server
     job_running: bool = server.is_job_running
