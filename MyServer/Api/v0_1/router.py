@@ -132,7 +132,7 @@ async def initialize(request: Request):
     if already_initialized:
         logging.info("Request for initialization, but already initialized. Skipping.")
         return False
-    result = server.setup_server()
+    result = await server.setup_server()
     if result:
         logging.info("Setting up server successful.")
     else:
@@ -159,6 +159,13 @@ async def stop_job(request: Request):
     stopped = await server.stop_job()
     logging.info(f"Sop of job, stopped: {stopped}.")
     return stopped
+
+@router_v01.post("/is_job_running")
+async def is_job_running(request: Request):
+    server: OpcUaTestServer = request.app.state.server
+    job_running: bool = server.is_job_running
+    logging.info(f"Request whether job is running: {job_running}.")
+    return job_running
 
 @router_v01.post("/custom_message",
                  summary="Send a custom message to the server.",

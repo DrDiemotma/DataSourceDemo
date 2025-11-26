@@ -8,6 +8,7 @@ from asyncua.ua import VariantType
 import logging
 
 from MyServer.Lifetime.machine_model_base import MachineModelBase
+from MyServer.MachineOperation import Mode
 from MyServer.OpcUa import ServerConfiguration, variant_type
 from datetime import datetime
 
@@ -94,8 +95,14 @@ class OpcUaTestServer:
         return self._set_up and not self._stopped  # this is too simplified, lets rework this later
 
     @property
-    def is_initialized(self):
+    def is_initialized(self) -> bool:
+        """Returns whether the system is initialized."""
         return self._set_up
+
+    @property
+    def is_job_running(self) -> bool:
+        """Returns whether a job is running."""
+        return self.model.mode == Mode.RUNNING
 
     async def setup_server(self) -> bool:
         """

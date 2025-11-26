@@ -42,11 +42,13 @@ class MachineModel(MachineModelBase):
         logging.info("Starting job.")
         for mutator in self._drivers:
             mutator.mode = Mode.RUNNING
+        self.mode = Mode.RUNNING
 
     def stop_job(self):
         logging.info("Stopping job.")
         for mutator in self._drivers:
             mutator.mode = Mode.IDLE
+        self.mode = Mode.IDLE
 
     def set_state_broken(self):
         logging.info("Setting machine state to \"broken\".")
@@ -62,7 +64,7 @@ class MachineModel(MachineModelBase):
         self._sensors: list[SensorBase] = []
         self._drivers: list[DriverBase | SimulationDriver] = []
         self._state: State = State.NORMAL
-        self._mode: Mode = Mode.RUNNING
+        self._mode: Mode = Mode.IDLE
 
         self._sensor_factory_map: dict[SensorType, DriverFactory] = {
             SensorType.TEMPERATURE: TemperatureSimulationDriverFactory(),

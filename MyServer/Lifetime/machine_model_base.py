@@ -31,6 +31,11 @@ class MachineModelBase(ABC):
         """List of current sensors."""
         pass
 
+    @property
+    @abstractmethod
+    def mode(self):
+        pass
+
     @abstractmethod
     def save_configuration(self, file_path: str):
         """Save the current configuration to a file."""
@@ -50,6 +55,8 @@ class MachineModelBase(ABC):
     async def stop_job(self):
         """Stop the running job."""
         pass
+
+
 
     @abstractmethod
     def custom_message(self, message: dict[str, Any]) -> bool:
