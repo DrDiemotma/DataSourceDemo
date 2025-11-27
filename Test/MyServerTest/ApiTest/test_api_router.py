@@ -22,7 +22,7 @@ def test_status(client: TestClient):
     assert response.status_code == 200, f"Bad response: {response}"
     answer = response.json()
     assert "status" in answer, "Status not in response."
-    assert "status" == "ok", "Status was not 'ok'."
+    assert answer["status"] == "ok", "Status was not 'ok'."
 
 def test_add_sensor_simulator_config_none(client: TestClient):
     sensor_config: SensorConfig = SensorConfig(type=SensorType.TEMPERATURE, identifier=42, simulator_config=None)
