@@ -6,13 +6,17 @@ from asyncua import Client
 
 from MyServer import OpcUaTestServer
 from MyServer.Lifetime import MachineModelBase
-from MyServer.MachineOperation import SensorId
+from MyServer.MachineOperation import SensorId, Mode
 from MyServer.Sensor import TemperatureSensor
 from MyServer.Sensor.Base import SensorBase
 from MyServer.Simulation import SimulationDriver
 
 
 class MachineModelMock(MachineModelBase):
+    @property
+    def mode(self):
+        return Mode.RUNNING
+
     def start_job(self):
         pass
 
