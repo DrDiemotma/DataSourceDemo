@@ -17,9 +17,15 @@ def client() -> Generator[TestClient, Any, None]:
         yield client
 
 
+def test_status(client: TestClient):
+    response = client.get("/v0.1/status")
+    assert response.status_code == 200, f"Bad response: {response}"
+    answer = response.json()
+    assert "status" in answer, "Status not in response."
+    assert "status" == "ok", "Status was not 'ok'."
+
 def test_add_sensor_simulator_config_none(client: TestClient):
     sensor_config: SensorConfig = SensorConfig(type=SensorType.TEMPERATURE, identifier=42, simulator_config=None)
-    # client: TestClient = create_test_client()
     response = client.post("/v0.1/add_sensor", json=sensor_config.model_dump())
     assert response.is_success, print(response)
 

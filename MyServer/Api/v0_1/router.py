@@ -7,7 +7,6 @@ from MyServer.MachineOperation import SensorType
 from MyServer.Sensor import TemperatureSensor
 from MyServer.Sensor.Base import SensorBase, SensorDictBase
 from MyServer.Simulation import TemperatureSimulationDriver
-from .examples import router_examples
 
 
 router_v01 = APIRouter()
