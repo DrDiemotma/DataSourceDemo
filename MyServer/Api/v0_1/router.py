@@ -28,7 +28,8 @@ async def status(request: Request):
 async def start(request: Request):
     logging.info("Starting the machine.")
     server: OpcUaTestServer = request.app.state.server
-    await server.start()
+    result = await server.start()
+    return result
 
 @router_v01.post("/stop",
                  summary="Stop the server.",

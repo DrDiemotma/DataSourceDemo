@@ -24,6 +24,12 @@ def test_status(client: TestClient):
     assert "status" in answer, "Status not in response."
     assert answer["status"] == "ok", "Status was not 'ok'."
 
+def test_start(client: TestClient):
+    response = client.post("v0.1/start")
+    assert response.status_code == 200, "Response from starting was not okay."
+    value = response.json()  # this should have been performed on the setup
+    assert not value, "Machine was expected to start on boot."
+
 def test_add_sensor_simulator_config_none(client: TestClient):
     sensor_config: SensorConfig = SensorConfig(type=SensorType.TEMPERATURE, identifier=42, simulator_config=None)
     response = client.post("/v0.1/add_sensor", json=sensor_config.model_dump())
