@@ -35,6 +35,11 @@ def test_add_sensor_simulator_config_none(client: TestClient):
     response = client.post("/v0.1/add_sensor", json=sensor_config.model_dump())
     assert response.is_success, print(response)
 
+def test_add_sensor_pressure_simulator_config_none(client: TestClient):
+    sensor_config: SensorConfig = SensorConfig(type=SensorType.PRESSURE, identifier=42, simulator_config=None)
+    response = client.post("/v0.1/add_sensor", json=sensor_config.model_dump())
+    assert response.is_success, print(response)
+
 def test_get_sensors(client: TestClient):
     sensor_config: SensorConfig = SensorConfig(type=SensorType.TEMPERATURE, identifier=42, simulator_config=None)
     response = client.post("/v0.1/add_sensor", json=sensor_config.model_dump())

@@ -4,10 +4,9 @@ from MyServer import OpcUaTestServer
 from MyServer.Lifetime import MachineModelBase
 from MyServer.MachineOperation import SensorConfig, SensorConfigList, SensorId
 from MyServer.MachineOperation import SensorType
-from MyServer.Sensor import TemperatureSensor
+from MyServer.Sensor import TemperatureSensor, PressureSensor
 from MyServer.Sensor.Base import SensorBase, SensorDictBase
-from MyServer.Simulation import TemperatureSimulationDriver
-
+from MyServer.Simulation import TemperatureSimulationDriver, PressureSimulationDriver
 
 router_v01 = APIRouter()
 
@@ -75,7 +74,7 @@ async def add_sensor(sensor_config: SensorConfig, request: Request):
                         temperature_sensor,
                         **sensor_config.simulator_config
                     )
-                    logging.debug(f"Adding sensor {temperature_sensor.name} with mutator.")
+                    logging.debug(f"Adding sensor {temperature_sensor.name} with driver.")
                     server.model.add_sensor(temperature_sensor, temperature_mutator)
                 except Exception as e:
                     logging.error(f"Error caught: {e} config: {sensor_config.simulator_config}. Using default config.")
@@ -84,8 +83,25 @@ async def add_sensor(sensor_config: SensorConfig, request: Request):
                 logging.debug("Using default configuration.")
                 server.model.add_sensor(temperature_sensor)
             return True
+        case SensorType.PRESSURE:
+            pressure_sensor: PressureSensor = PressureSensor(sensor_config.identifier)
+            if not sensor_config.simulator_config is None:
+                try:
+                    pressure_mutator: PressureSimulationDriver = PressureSimulationDriver(
+                        pressure_sensor,
+                        **sensor_config.simulator_config
+                    )
+                    logging.debug(f"Adding sensor {pressure_sensor.name} with driver.")
+                    server.model.add_sensor(pressure_sensor, pressure_mutator)
+                except Exception as e:
+                    logging.error(f"Error caught: {e} config: {sensor_config.simulator_config}. Using default config.")
+                    server.model.add_sensor(pressure_sensor)
+            else:
+                logging.debug("Using default configuration.")
+                server.model.add_sensor(pressure_sensor)
+            return True
 
-    return False
+    return False  # should no longer occur, but here for good measure
 
 @router_v01.post("/delete_sensor",
                  summary="Delete a sensor.",
