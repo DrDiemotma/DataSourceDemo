@@ -161,7 +161,7 @@ class OpcUaTestServer:
             logging.info("Starting server")
             await self.setup_server()
             return True
-        logging.warning("Server already running")
+        logging.warning("Server already ,")
         return False
 
     async def stop(self):
